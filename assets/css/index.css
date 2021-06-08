@@ -1,0 +1,22 @@
+body {
+    padding-top: 30px;
+}
+
+#setting-chia-path-file-input,
+#setting-mainnet-log-path-file-input {
+    display: none;
+}
+
+.nav-tabs {
+    display              : grid;
+    grid-column          : 2;
+    grid-template-columns: 1fr 1fr;
+}
+
+#main-tab {
+    display: none;
+}
+
+.save-alert {
+    margin-top: 10px;
+}
