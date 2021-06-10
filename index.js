@@ -268,26 +268,34 @@ function proofs(str) {
             const d = res[0] + '-' + res[1] + '-' + res[2] + ' ' + res[3] + ':' + res[4] + ':' + res[5];
             const dt = new Date(d);
             if (res[6] === "harvester") {
-                if (res[7] === "chia.harvester.harvester") {
-                    const p = parseFloat(res[8]);
-                    const f = parseFloat(res[16]);
-                    let msg = 'Last Attempted Proof use ' + res[8] + ' of ' + res[22] + ' plots. Found ' + res[16] + ' block(s). Time: ' + res[19] + ' s.';
-                    const pt = parseFloat(res[19]);
-                    updateChart(dt, parseFloat(res[8]), pt);
-                    if (p > 0) {
-                        addTodayProofPlot(p, res[0] + '-' + res[1] + '-' + res[2]);
-                        logProof(res[0] + '-' + res[1] + '-' + res[2], res[3] + ':' + res[4] + ':' + res[5], p);
-                        if (f > 0 && config.blockRewardNotification === 'Y') {
-                            msg = 'Congratulations!!! you found ' + res[16] + ' block. At: ' + d + ' By ' + res[8] + '/' + res[22] + ' plots #' + res[14];
-                            notify(msg);
-                        }
-                        if (config.lastAttemptedNotification === 'Y') {
-                            notify(msg);
-                        }
-                        console.log(msg);
+                if (str.includes('WARNING') && str.includes('Looking up qualities')) {
+                    console.log(res);
+                    const sm = str.split('WARNING');
+                    if (sm && sm[1] !== undefined && sm[1] !== null && sm[1] !== '') {
+                        notify(d + ': ' + sm[1].trim());
                     }
-                } else if (res[7] === 'chia.plotting.plot') {
-                    getFarmSummary(config.chiaFilePath);
+                } else {
+                    if (res[7] === "chia.harvester.harvester") {
+                        const p = parseFloat(res[8]);
+                        const f = parseFloat(res[16]);
+                        let msg = 'Last Attempted Proof use ' + res[8] + ' of ' + res[22] + ' plots. Found ' + res[16] + ' block(s). Time: ' + res[19] + ' s.';
+                        const pt = parseFloat(res[19]);
+                        updateChart(dt, parseFloat(res[8]), pt);
+                        if (p > 0) {
+                            addTodayProofPlot(p, res[0] + '-' + res[1] + '-' + res[2]);
+                            logProof(res[0] + '-' + res[1] + '-' + res[2], res[3] + ':' + res[4] + ':' + res[5], p);
+                            if (f > 0 && config.blockRewardNotification === 'Y') {
+                                msg = 'Congratulations!!! you found ' + res[16] + ' block. At: ' + d + ' By ' + res[8] + '/' + res[22] + ' plots #' + res[14];
+                                notify(msg);
+                            }
+                            if (config.lastAttemptedNotification === 'Y') {
+                                notify(msg);
+                            }
+                            console.log(msg);
+                        }
+                    } else if (res[7] === 'chia.plotting.plot') {
+                        getFarmSummary(config.chiaFilePath);
+                    }
                 }
             }
         }
@@ -824,9 +832,9 @@ if (fs.existsSync(configFile)) {
     hcr([], [], []);
     initialChart();
 } else {
-    fs.copyFileSync(configFile + '.config', configFile + '.test', fs.constants.COPYFILE_EXCL);
-    fs.copyFileSync(infoFile + '.config', infoFile + '.test', fs.constants.COPYFILE_EXCL);
-    fs.copyFileSync(lastAttemptedProofFile + '.config', lastAttemptedProofFile + '.test', fs.constants.COPYFILE_EXCL);
+    fs.copyFileSync(configFile + '.config', configFile, fs.constants.COPYFILE_EXCL);
+    fs.copyFileSync(infoFile + '.config', infoFile, fs.constants.COPYFILE_EXCL);
+    fs.copyFileSync(lastAttemptedProofFile + '.config', lastAttemptedProofFile, fs.constants.COPYFILE_EXCL);
     initial();
     hcr([], [], []);
     initialChart();

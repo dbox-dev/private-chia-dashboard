@@ -93,6 +93,6 @@ function doSend(msg) {
     if (wsConnected) {
         socket.send(msg);
     } else {
-        console.log('web socket not connected!');
+        console.log('Web socket was not connected!');
     }
 }
