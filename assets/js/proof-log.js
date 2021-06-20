@@ -1,5 +1,5 @@
 function logProof(d, t, p) {
-    const logFile = basepath + '\\logs\\proof-' + d + '.json';
+    const logFile = logPath.concat('\\proof-' + d + '.json');
     if (!fs.existsSync(logFile)) {
         fs.appendFile(logFile, '[]', function (err) {
             if (err) console.error(err);

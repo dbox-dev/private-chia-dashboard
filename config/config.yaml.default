@@ -1,6 +1,7 @@
 version: 1.0.0
 chiaFilePath: 
 mainnetLogPath: 
+dataPath: 
 enableLineNotification: 'N'
 lineToken: 
 blockRewardNotification: 'N'

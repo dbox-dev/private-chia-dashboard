@@ -8,11 +8,21 @@ const { exec } = require("child_process");
 const Highcharts = require('highcharts');
 const app = require('electron').remote.app;
 const os = require("os");
+const makeDir = require('make-dir');
 
+const accountName = os.userInfo().username;
+const profilePath = 'C:\\Users\\'.concat(accountName);
+const appDataPath = profilePath.concat('\\.pcd');
+const configPath = appDataPath.concat('\\config');
+const dataPath = appDataPath.concat('\\data');
+const logPath = appDataPath.concat('\\logs');
 const basepath = app.getAppPath();
-const configFile = basepath + '\\config\\config.yaml';
-const infoFile = basepath + '\\data\\info.json';
-const lastAttemptedProofFile = basepath + '\\data\\last-attempted-proof.json';
+const defaultConfigFile = basepath.concat('\\config\\config.yaml.default');
+const defaultInfoFile = basepath.concat('\\data\\info.json.default');
+const defaultLastAttemptedProofFile = basepath.concat('\\data\\last-attempted-proof.json.default');
+const configFile = configPath.concat('\\config.yaml');
+const infoFile = dataPath.concat('\\info.json');
+const lastAttemptedProofFile = dataPath.concat('\\last-attempted-proof.json');
 
 let config = {};
 let farmInfo = {};
@@ -313,20 +323,18 @@ function saveInfo(info) {
 }
 
 function monitorLog() {
-    if (farmInfo.farmStatus === 'Farming') {
-        const logPath = config.mainnetLogPath?.replace('\\', '/');
-        const logFile = logPath + "/debug.log";
-        if (fs.existsSync(logFile)) {
-            if (mytail) {
-                mytail.stop();
-            }
-            mytail = new Tail(logPath + "/debug.log", line => {
-                proofs(line);
-            });
-            mytail.on('error', err => console.error(err));
-        } else {
-            console.error('no file');
+    const logPath = config.mainnetLogPath?.replace('\\', '/');
+    const logFile = logPath + "/debug.log";
+    if (fs.existsSync(logFile)) {
+        if (mytail) {
+            mytail.stop();
         }
+        mytail = new Tail(logPath + "/debug.log", line => {
+            proofs(line);
+        });
+        mytail.on('error', err => console.error(err));
+    } else {
+        console.error('No log file.');
     }
 }
 
@@ -405,16 +413,19 @@ function renderInfo(data) {
     if (data.yesterdayProofPlotPerformanceStats === 'down') {
         document.getElementById('ele-yesterday-proof-plot-stats').classList.remove('text-success');
         document.getElementById('ele-yesterday-proof-plot-stats').classList.add('text-danger');
+        document.getElementById('ele-yesterday-proof-plot-stats-icon-up').style.visibility = 'hidden';
+        document.getElementById('ele-yesterday-proof-plot-stats-icon-down').style.visibility = 'visible';
     } else {
         document.getElementById('ele-yesterday-proof-plot-stats').classList.remove('text-danger');
         document.getElementById('ele-yesterday-proof-plot-stats').classList.add('text-success');
+        document.getElementById('ele-yesterday-proof-plot-stats-icon-up').style.visibility = 'visible';
+        document.getElementById('ele-yesterday-proof-plot-stats-icon-down').style.visibility = 'hidden';
     }
 }
 
 let refreshFarmStatusCoolDown;
 
 function refreshFarmStatus(chiaFilePath) {
-    console.log('refresh');
     if (chiaFilePath) {
         exec(chiaFilePath + ' show -s', (error, data, getter) => {
             if (data) {
@@ -522,7 +533,6 @@ function getFarmSummary(chiaFilePath) {
     }
 }
 function renderSettings(data) {
-    const accountName = os.userInfo().username;
     if (!data.mainnetLogPath) {
         const mainnetLogPath = 'C:\\Users\\'.concat(accountName).concat('\\.chia\\mainnet\\log');
         data.mainnetLogPath = mainnetLogPath;
@@ -827,14 +837,26 @@ document.getElementById('setting-save-server').addEventListener('click', functio
     });
 });
 
-if (fs.existsSync(configFile)) {
-    initial();
-    hcr([], [], []);
-    initialChart();
+if (!fs.existsSync(appDataPath)) {
+    (async () => {
+        const mkdir = await Promise.all([makeDir(configPath), makeDir(dataPath), makeDir(logPath)]);
+
+        console.log(mkdir);
+        if (fs.existsSync(configFile)) {console.log('exist config file');
+            initial();
+            hcr([], [], []);
+            initialChart();
+        } else {
+            console.log('not exist config');
+            fs.copyFileSync(defaultConfigFile, configFile, fs.constants.COPYFILE_EXCL);
+            fs.copyFileSync(defaultInfoFile, infoFile, fs.constants.COPYFILE_EXCL);
+            fs.copyFileSync(defaultLastAttemptedProofFile, lastAttemptedProofFile, fs.constants.COPYFILE_EXCL);
+            initial();
+            hcr([], [], []);
+            initialChart();
+        }
+    })();
 } else {
-    fs.copyFileSync(configFile + '.config', configFile, fs.constants.COPYFILE_EXCL);
-    fs.copyFileSync(infoFile + '.config', infoFile, fs.constants.COPYFILE_EXCL);
-    fs.copyFileSync(lastAttemptedProofFile + '.config', lastAttemptedProofFile, fs.constants.COPYFILE_EXCL);
     initial();
     hcr([], [], []);
     initialChart();
